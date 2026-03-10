@@ -28,35 +28,3 @@ The data include continuous variables (e.g., DOC, fish length, stable isotopes, 
 1. Do fish from lakes with higher DOC have different trophic positions?
 2. Do fish from lakes with higher DOC have different pelagic diet proportions?
 3. Do these DOC relationships differ across species and regions?
-
-## How to run
-From the `my_project/analysis` directory:
-
-```r
-source("00_build_project_outputs.R")
-```
-
-This generates:
-- `data/analysis_df.csv`
-- summary tables in `output_tables/`
-- figures in `figures/`
-
-Render notebooks (optional):
-
-```r
-rmarkdown::render("01_data_cleaning.Rmd")
-rmarkdown::render("02_eda.Rmd")
-rmarkdown::render("03_core_analysis.Rmd")
-rmarkdown::render("04_mapping.Rmd")
-```
-
-Run the Shiny app:
-
-```r
-shiny::runApp("../shiny_app")
-```
-
-## Notes on analysis choices
-- Column names in the planning guide were conceptual, so this project uses the real dataset names after standardized cleaning.
-- Baseline values are joined by lake because the baseline table has one row per lake in this dataset.
-- This project is observational: it identifies associations, not causation.
