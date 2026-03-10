@@ -1,0 +1,66 @@
+---
+title: "02 Exploratory Data Analysis"
+author: "BIS15L DOC Project"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+analysis_df <- read_csv("../data/analysis_df.csv", show_col_types = FALSE)
+```
+
+## Coverage Counts
+
+```{r}
+analysis_df %>%
+  summarize(
+    n_rows = n(),
+    n_lakes = n_distinct(lake),
+    n_species = n_distinct(fish_species),
+    n_regions = n_distinct(region),
+    year_min = min(year, na.rm = TRUE),
+    year_max = max(year, na.rm = TRUE)
+  )
+```
+
+## Numeric Summary
+
+```{r}
+analysis_df %>%
+  summarize(
+    mean_doc = mean(doc_mgl, na.rm = TRUE),
+    mean_length = mean(length_mm, na.rm = TRUE),
+    mean_pelagic = mean(pelagic_diet_proportion, na.rm = TRUE),
+    mean_trophic = mean(trophic_position, na.rm = TRUE)
+  )
+```
+
+## EDA Plot 1: DOC Distribution
+
+```{r}
+ggplot(analysis_df, aes(x = doc_mgl)) +
+  geom_histogram(bins = 30, fill = "#4B8BBE", color = "white") +
+  labs(
+    title = "Distribution of DOC across fish samples",
+    x = "DOC (mg/L)",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+
+## EDA Plot 2: Length by Species
+
+```{r}
+ggplot(analysis_df, aes(x = fish_species, y = length_mm, fill = fish_species)) +
+  geom_boxplot(alpha = 0.8, outlier.alpha = 0.4) +
+  labs(
+    title = "Fish length by species",
+    x = "Fish species",
+    y = "Length (mm)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```

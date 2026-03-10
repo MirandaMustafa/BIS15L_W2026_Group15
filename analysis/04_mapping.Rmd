@@ -1,0 +1,58 @@
+---
+title: "04 Mapping"
+author: "BIS15L DOC Project"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+analysis_df <- read_csv("../data/analysis_df.csv", show_col_types = FALSE)
+```
+
+## Lake Location Overview
+
+```{r}
+lake_map_df <- analysis_df %>%
+  group_by(lake, latitude, longitude) %>%
+  summarize(
+    mean_doc = mean(doc_mgl, na.rm = TRUE),
+    mean_trophic = mean(trophic_position, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  filter(!is.na(latitude), !is.na(longitude))
+
+ggplot(lake_map_df, aes(x = longitude, y = latitude, color = mean_doc)) +
+  geom_point(size = 2.8, alpha = 0.9) +
+  scale_color_viridis_c(option = "magma") +
+  coord_quickmap() +
+  labs(
+    title = "Lake locations colored by mean DOC",
+    x = "Longitude",
+    y = "Latitude",
+    color = "Mean DOC"
+  ) +
+  theme_minimal()
+```
+
+## Focused Map of High-DOC Lakes
+
+```{r}
+top_doc <- lake_map_df %>%
+  arrange(desc(mean_doc)) %>%
+  slice_head(n = 12)
+
+ggplot(top_doc, aes(x = longitude, y = latitude, label = lake, size = mean_trophic)) +
+  geom_point(color = "#2c7fb8", alpha = 0.8) +
+  geom_text(check_overlap = TRUE, hjust = 0, nudge_x = 0.15, size = 3) +
+  coord_quickmap() +
+  labs(
+    title = "Top DOC lakes with mean trophic position",
+    x = "Longitude",
+    y = "Latitude",
+    size = "Mean trophic"
+  ) +
+  theme_minimal()
+```

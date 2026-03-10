@@ -1,0 +1,133 @@
+---
+title: "03 Core Analysis"
+author: "BIS15L DOC Project"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+analysis_df <- read_csv("../data/analysis_df.csv", show_col_types = FALSE)
+```
+
+## Q1: Does DOC relate to trophic position?
+
+```{r}
+ggplot(analysis_df, aes(x = doc_mgl, y = trophic_position)) +
+  geom_point(alpha = 0.45, color = "#1f78b4") +
+  geom_smooth(method = "lm", se = FALSE, color = "#d95f02", linewidth = 1) +
+  labs(
+    title = "DOC vs trophic position",
+    x = "DOC (mg/L)",
+    y = "Trophic position"
+  ) +
+  theme_minimal()
+```
+
+## Q2: Does DOC relate to pelagic diet proportion?
+
+```{r}
+ggplot(analysis_df, aes(x = doc_mgl, y = pelagic_diet_proportion)) +
+  geom_point(alpha = 0.45, color = "#33a02c") +
+  geom_smooth(method = "lm", se = FALSE, color = "#e31a1c", linewidth = 1) +
+  labs(
+    title = "DOC vs pelagic diet proportion",
+    x = "DOC (mg/L)",
+    y = "Pelagic diet proportion"
+  ) +
+  theme_minimal()
+```
+
+## Q3: Do DOC patterns vary by species?
+
+```{r}
+ggplot(analysis_df, aes(x = fish_species, y = trophic_position, fill = fish_species)) +
+  geom_boxplot(alpha = 0.8, outlier.alpha = 0.4) +
+  labs(
+    title = "Trophic position by fish species",
+    x = "Fish species",
+    y = "Trophic position"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+```{r}
+ggplot(analysis_df, aes(x = fish_species, y = pelagic_diet_proportion, fill = fish_species)) +
+  geom_boxplot(alpha = 0.8, outlier.alpha = 0.4) +
+  labs(
+    title = "Pelagic diet proportion by fish species",
+    x = "Fish species",
+    y = "Pelagic diet proportion"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+```{r}
+doc_level_summary <- analysis_df %>%
+  group_by(doc_level) %>%
+  summarize(
+    n = n(),
+    mean_pelagic = mean(pelagic_diet_proportion, na.rm = TRUE),
+    mean_trophic = mean(trophic_position, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(doc_level_summary, aes(x = doc_level, y = mean_trophic, fill = doc_level)) +
+  geom_col(alpha = 0.9) +
+  labs(
+    title = "Mean trophic position by DOC category",
+    x = "DOC category",
+    y = "Mean trophic position"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+```{r}
+ggplot(analysis_df, aes(x = doc_mgl, y = trophic_position, color = fish_species)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.8) +
+  facet_wrap(~ fish_species) +
+  labs(
+    title = "DOC vs trophic position by species",
+    x = "DOC (mg/L)",
+    y = "Trophic position",
+    color = "Species"
+  ) +
+  theme_minimal()
+```
+
+## Summary Tables
+
+```{r}
+species_summary <- analysis_df %>%
+  group_by(fish_species) %>%
+  summarize(
+    n = n(),
+    mean_doc = mean(doc_mgl, na.rm = TRUE),
+    mean_length = mean(length_mm, na.rm = TRUE),
+    mean_pelagic = mean(pelagic_diet_proportion, na.rm = TRUE),
+    mean_trophic = mean(trophic_position, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+species_summary
+```
+
+```{r}
+lake_summary <- analysis_df %>%
+  group_by(lake, region) %>%
+  summarize(
+    n = n(),
+    mean_doc = mean(doc_mgl, na.rm = TRUE),
+    mean_pelagic = mean(pelagic_diet_proportion, na.rm = TRUE),
+    mean_trophic = mean(trophic_position, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+lake_summary %>% arrange(desc(mean_doc)) %>% head(10)
+```
