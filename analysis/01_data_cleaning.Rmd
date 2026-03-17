@@ -3,6 +3,7 @@ title: "01 Data Cleaning"
 author: "BIS15L DOC Project"
 output: html_document
 ---
+Code by: Kenta Hsu
 
 ```{r setup, message=FALSE, warning=FALSE}
 library(readr)
