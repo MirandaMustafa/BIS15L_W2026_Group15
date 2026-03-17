@@ -23,7 +23,7 @@ The data include continuous variables (e.g., DOC, fish length, stable isotopes, 
 - `output_tables/`: csv summaries from analysis 
 - `presentation/`: contains presentation .pptx and .pdf versions
 
-*** PLEASE READ ***
+### *** PLEASE READ ***
 - There are 4 analysis scripts as shown in the repo structure above
 - In order to run them smoothly, first run `01_data_cleaning.Rmd` which joins and cleans the data, and saves the new csv file in /data.
 - This is because the other three analysis scripts that follow (and the shiny app) uses this new csv.
