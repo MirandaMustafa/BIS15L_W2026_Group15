@@ -1,5 +1,10 @@
 # DOC, Lake Browning, and Fish Feeding Ecology (BIS15L Project)
 
+### *** PLEASE READ ***
+- There are 4 analysis scripts as shown in the repo structure above
+- In order to run them smoothly, first run `01_data_cleaning.Rmd` which joins and cleans the data, and saves the new csv file in /data.
+- This is because the other three analysis scripts that follow (and the shiny app) uses this new csv.
+
 ## Project question
 How does lake browning (higher dissolved organic carbon, DOC) relate to fish diet and trophic position across lakes?
 
@@ -22,8 +27,3 @@ The data include continuous variables (e.g., DOC, fish length, stable isotopes, 
 - `figures/`: saved EDA and mapping plots generated from analysis scripts
 - `output_tables/`: csv summaries from analysis 
 - `presentation/`: contains presentation .pptx and .pdf versions
-
-### *** PLEASE READ ***
-- There are 4 analysis scripts as shown in the repo structure above
-- In order to run them smoothly, first run `01_data_cleaning.Rmd` which joins and cleans the data, and saves the new csv file in /data.
-- This is because the other three analysis scripts that follow (and the shiny app) uses this new csv.
