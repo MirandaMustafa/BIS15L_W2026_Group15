@@ -1,7 +1,7 @@
 # DOC, Lake Browning, and Fish Feeding Ecology (BIS15L Project)
 
 ### *** PLEASE READ ***
-- There are 4 analysis scripts as shown in the repo structure above
+- There are 4 analysis scripts as shown in the `/analysis` folder
 - In order to run them smoothly, first run `01_data_cleaning.Rmd` which joins and cleans the data, and saves the new csv file in /data.
 - This is because the other three analysis scripts that follow (and the shiny app) uses this new csv.
 
