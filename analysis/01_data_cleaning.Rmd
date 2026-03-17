@@ -8,23 +8,21 @@ output: html_document
 library(readr)
 library(dplyr)
 library(lubridate)
-
-clean_names_simple <- function(x) {
-  x <- gsub("[^A-Za-z0-9]+", "_", x)
-  x <- gsub("_+", "_", x)
-  x <- gsub("^_|_$", "", x)
-  tolower(x)
-}
+library(janitor)
 ```
 
 ## Import Data
+
+We first load the raw fish and baseline datasets so we can inspect their size and variable names. We also clean the column names with a standard function from `janitor`.
+
+Lets first load the raw fish+baseline datasets and explore dimensions and var names. We also clean the names for easier use. 
 
 ```{r}
 fish <- read_csv("../data/Charetteetal2024_CJFAS_Fish.csv", na = c("", "NA", "-999"), show_col_types = FALSE)
 baseline <- read_csv("../data/Charetteetal2024_CJFAS_Baselines_DOC.csv", na = c("", "NA", "-999"), show_col_types = FALSE)
 
-names(fish) <- clean_names_simple(names(fish))
-names(baseline) <- clean_names_simple(names(baseline))
+fish <- clean_names(fish)
+baseline <- clean_names(baseline)
 
 list(
   fish_dim = dim(fish),
@@ -36,6 +34,10 @@ list(
 
 ## Clean and Join
 
+The paper/data source provided two separate csvs. One csv is the primary csv with each entry representing a fish collected from some lake at some time. The second csv has each entry as a location or lake and it contains the baseline metrics of carbon and nitrogen isotope ratios at the pelagic and benthic food sources. We have to join these two datasets by its lake so that each fish entry also has the baseline values available to them. 
+
+We also convert some vars to factors, build date columns, and derive a DOC column that is categorical for later use.
+
 ```{r}
 fish_clean <- fish %>%
   mutate(
@@ -44,8 +46,8 @@ fish_clean <- fish %>%
     region = as.factor(region),
     sample_date = make_date(year, month, day),
     doc_level = case_when(
-      doc_mgl < 5 ~ "low_doc",
-      doc_mgl < 10 ~ "medium_doc",
+      doc_mg_l < 5 ~ "low_doc",
+      doc_mg_l < 10 ~ "medium_doc",
       TRUE ~ "high_doc"
     ),
     doc_level = factor(doc_level, levels = c("low_doc", "medium_doc", "high_doc"))
@@ -60,17 +62,17 @@ fish_joined <- fish_clean %>%
         baseline_av_pelagic_d15n = av_pelagic_d15n,
         baseline_av_benthic_d13c = av_benthic_d13c,
         baseline_av_benthic_d15n = av_benthic_d15n,
-        d13c_baselinedifference
+        d13c_baseline_difference
       ),
     by = "lake"
   )
 
 analysis_df <- fish_joined %>%
   select(
-    datasource, lake, region, fish_species, sampleid,
+    data_source, lake, region, fish_species, sample_id,
     year, month, day, sample_date,
     latitude, longitude,
-    doc_mgl, doc_level,
+    doc_mg_l, doc_level,
     length_mm, d13c, d15n, c_n,
     av_pelagic_d13c, av_pelagic_d15n,
     av_benthic_d13c, av_benthic_d15n,
@@ -78,7 +80,7 @@ analysis_df <- fish_joined %>%
     pelagic_diet_proportion, trophic_position,
     baseline_av_pelagic_d13c, baseline_av_pelagic_d15n,
     baseline_av_benthic_d13c, baseline_av_benthic_d15n,
-    d13c_baselinedifference
+    d13c_baseline_difference
   )
 
 dim(analysis_df)
@@ -86,19 +88,22 @@ dim(analysis_df)
 
 ## Missingness QA
 
+Some data QC for missing values. 
+
 ```{r}
-analysis_df %>%
-  summarize(
-    across(
-      c(doc_mgl, length_mm, pelagic_diet_proportion, trophic_position, d13c, d15n, c_n),
-      ~ sum(is.na(.x))
-    )
-  )
+sum(is.na(analysis_df$doc_mg_l))
+sum(is.na(analysis_df$length_mm))
+sum(is.na(analysis_df$pelagic_diet_proportion))
+sum(is.na(analysis_df$trophic_position))
+sum(is.na(analysis_df$d13c))
+sum(is.na(analysis_df$d15n))
+sum(is.na(analysis_df$c_n))
 ```
 
-Rows with missing values are removed only when those variables are needed for a specific figure or summary.
 
 ## Save Cleaned Dataset
+
+Finally, we save the cleaned analysis dataset so the later notebooks can read the same file. This helps keep the rest of the project consistent.
 
 ```{r}
 write_csv(analysis_df, "../data/analysis_df.csv")

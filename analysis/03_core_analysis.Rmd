@@ -12,26 +12,36 @@ library(ggplot2)
 analysis_df <- read_csv("../data/analysis_df.csv", show_col_types = FALSE)
 ```
 
+Now being informed by the EDA, we are starting to answer the main question of How DOC relates to fish activity. Again, we are defining fish activity in two axis for our project. First, trophic position. Second, pelagic vs. benthic diet shifts. 
+
 ## Q1: Does DOC relate to trophic position?
 
+This first plot compares DOC and trophic position across individual fish samples. The fitted line helps us see whether there is a simple overall trend.
+
+The trend line is basically flat. We can interpret this a signal that suggests that DOC does not relate heavily to changes in tropic position of fish when averaging across species. 
+
 ```{r}
-ggplot(analysis_df, aes(x = doc_mgl, y = trophic_position)) +
-  geom_point(alpha = 0.45, color = "#1f78b4") +
-  geom_smooth(method = "lm", se = FALSE, color = "#d95f02", linewidth = 1) +
+ggplot(analysis_df, aes(x = doc_mg_l, y = trophic_position)) +
+  geom_point(alpha = 0.45, color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "orange", linewidth = 1) +
   labs(
     title = "DOC vs trophic position",
     x = "DOC (mg/L)",
-    y = "Trophic position"
+    y = "trophic position"
   ) +
   theme_minimal()
 ```
 
 ## Q2: Does DOC relate to pelagic diet proportion?
 
+This plot asks the same question for pelagic diet proportion instead of trophic position. It gives a quick visual check for whether diet shifts along the DOC gradient.
+
+We can see there is more of a clear trend here with negative correlation. This can be interpreted as higher DOC correlating with less pelagic diets in fish averaged across species. 
+
 ```{r}
-ggplot(analysis_df, aes(x = doc_mgl, y = pelagic_diet_proportion)) +
-  geom_point(alpha = 0.45, color = "#33a02c") +
-  geom_smooth(method = "lm", se = FALSE, color = "#e31a1c", linewidth = 1) +
+ggplot(analysis_df, aes(x = doc_mg_l, y = pelagic_diet_proportion)) +
+  geom_point(alpha = 0.45, color = "green") +
+  geom_smooth(method = "lm", se = FALSE, color = "red", linewidth = 1) +
   labs(
     title = "DOC vs pelagic diet proportion",
     x = "DOC (mg/L)",
@@ -41,6 +51,10 @@ ggplot(analysis_df, aes(x = doc_mgl, y = pelagic_diet_proportion)) +
 ```
 
 ## Q3: Do DOC patterns vary by species?
+
+These boxplots compare species-level patterns in trophic position and pelagic diet proportion. They help us see whether differences among species may matter alongside DOC. 
+
+We can see that the average/baseline trophic position definitely varies per species which suggests that fish species are hetrogenous for position, and it may not be wise to assess them all together. 
 
 ```{r}
 ggplot(analysis_df, aes(x = fish_species, y = trophic_position, fill = fish_species)) +
@@ -54,6 +68,10 @@ ggplot(analysis_df, aes(x = fish_species, y = trophic_position, fill = fish_spec
   theme(legend.position = "none")
 ```
 
+This second boxplot keeps the same structure but focuses on pelagic diet proportion. Looking at both plots together helps us compare how species differ across the two response variables.
+
+This suggests the same thing for the pelagic diet trait. Its highly variable across species. 
+
 ```{r}
 ggplot(analysis_df, aes(x = fish_species, y = pelagic_diet_proportion, fill = fish_species)) +
   geom_boxplot(alpha = 0.8, outlier.alpha = 0.4) +
@@ -65,6 +83,8 @@ ggplot(analysis_df, aes(x = fish_species, y = pelagic_diet_proportion, fill = fi
   theme_minimal() +
   theme(legend.position = "none")
 ```
+
+We can also simplify the data by grouping fish into DOC categories and comparing the average trophic position in each group. This gives a broad summary instead of a sample-by-sample view.
 
 ```{r}
 doc_level_summary <- analysis_df %>%
@@ -87,8 +107,15 @@ ggplot(doc_level_summary, aes(x = doc_level, y = mean_trophic, fill = doc_level)
   theme(legend.position = "none")
 ```
 
+Finally, we facet the DOC and trophic-position relationship by species. 
+
+We see that as suspected, the species level trends are different from the ones observed when plotting species all together which we thought had little correlation. 
+
+Specifically, species like the European Perch, Yellow Perch, and stickleback seem to actually have a positive correlation. We also observe that black bass and walleye exhibit negative correlation as well.
+
+
 ```{r}
-ggplot(analysis_df, aes(x = doc_mgl, y = trophic_position, color = fish_species)) +
+ggplot(analysis_df, aes(x = doc_mg_l, y = trophic_position, color = fish_species)) +
   geom_point(alpha = 0.5) +
   geom_smooth(method = "lm", se = FALSE, linewidth = 0.8) +
   facet_wrap(~ fish_species) +
@@ -103,12 +130,14 @@ ggplot(analysis_df, aes(x = doc_mgl, y = trophic_position, color = fish_species)
 
 ## Summary Tables
 
+These are some supplementary tables that give more average-based insights on how the species differ in trophic and diet metrics
+
 ```{r}
 species_summary <- analysis_df %>%
   group_by(fish_species) %>%
   summarize(
     n = n(),
-    mean_doc = mean(doc_mgl, na.rm = TRUE),
+    mean_doc = mean(doc_mg_l, na.rm = TRUE),
     mean_length = mean(length_mm, na.rm = TRUE),
     mean_pelagic = mean(pelagic_diet_proportion, na.rm = TRUE),
     mean_trophic = mean(trophic_position, na.rm = TRUE),
@@ -118,12 +147,14 @@ species_summary <- analysis_df %>%
 species_summary
 ```
 
+This final table summarizes the same variables by lake and region. This can be useful for future analysis that is focused also on spatial trends in DOC levels and fish activity.
+
 ```{r}
 lake_summary <- analysis_df %>%
   group_by(lake, region) %>%
   summarize(
     n = n(),
-    mean_doc = mean(doc_mgl, na.rm = TRUE),
+    mean_doc = mean(doc_mg_l, na.rm = TRUE),
     mean_pelagic = mean(pelagic_diet_proportion, na.rm = TRUE),
     mean_trophic = mean(trophic_position, na.rm = TRUE),
     .groups = "drop"

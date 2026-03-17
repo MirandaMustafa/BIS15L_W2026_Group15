@@ -12,7 +12,11 @@ library(ggplot2)
 analysis_df <- read_csv("../data/analysis_df.csv", show_col_types = FALSE)
 ```
 
+Now we are starting some EDA. 
+
 ## Coverage Counts
+
+We begin by checking how many rows, lakes, species, and regions are in the cleaned dataset. This gives a quick overview of the scope of the data before plotting.
 
 ```{r}
 analysis_df %>%
@@ -28,10 +32,12 @@ analysis_df %>%
 
 ## Numeric Summary
 
+Lets do some simple means on the vars. It'll give us a quick sense of the typical DOC, fish length, diet proportion, and trophic position in the dataset.
+
 ```{r}
 analysis_df %>%
   summarize(
-    mean_doc = mean(doc_mgl, na.rm = TRUE),
+    mean_doc = mean(doc_mg_l, na.rm = TRUE),
     mean_length = mean(length_mm, na.rm = TRUE),
     mean_pelagic = mean(pelagic_diet_proportion, na.rm = TRUE),
     mean_trophic = mean(trophic_position, na.rm = TRUE)
@@ -40,9 +46,13 @@ analysis_df %>%
 
 ## EDA Plot 1: DOC Distribution
 
+This histogram shows how DOC values are distributed across all fish samples. It helps us see whether most observations are concentrated at lower or higher DOC levels. This is crucial because our analysis is concerned with how other vars change when we change DOC. Therefore, we need a good range of DOC values, and preferably an even amount of sampling. 
+
+We can see that it clears the first criteria of range, but very uneven. We have to be careful when drawing conclusions. 
+
 ```{r}
-ggplot(analysis_df, aes(x = doc_mgl)) +
-  geom_histogram(bins = 30, fill = "#4B8BBE", color = "white") +
+ggplot(analysis_df, aes(x = doc_mg_l)) +
+  geom_histogram(bins = 30, fill = "blue", color = "white") +
   labs(
     title = "Distribution of DOC across fish samples",
     x = "DOC (mg/L)",
@@ -53,13 +63,15 @@ ggplot(analysis_df, aes(x = doc_mgl)) +
 
 ## EDA Plot 2: Length by Species
 
+This boxplot compares fish length across species. It lets us see whether some species tend to be larger or show more variation in size than others.
+
 ```{r}
 ggplot(analysis_df, aes(x = fish_species, y = length_mm, fill = fish_species)) +
   geom_boxplot(alpha = 0.8, outlier.alpha = 0.4) +
   labs(
-    title = "Fish length by species",
-    x = "Fish species",
-    y = "Length (mm)"
+    title = "fish length by species",
+    x = "fish species",
+    y = "length (mm)"
   ) +
   theme_minimal() +
   theme(legend.position = "none")

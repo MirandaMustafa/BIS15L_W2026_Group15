@@ -12,13 +12,19 @@ library(ggplot2)
 analysis_df <- read_csv("../data/analysis_df.csv", show_col_types = FALSE)
 ```
 
+Finally, we want to dip our toes into some spatial/mapping analysis. This is to see on the map is there are any DOC level trends, that can potentially motivate further investigation in particular areas and lakes.
+
 ## Lake Location Overview
+
+We start by summarizing each lake to one point using its average DOC and trophic position. This map shows where the study lakes are located and how mean DOC changes across them.
+
+We do a plot here that has long and lat as x and y axis, which allows us to see spatially where the high DOC lakes and areas are. 
 
 ```{r}
 lake_map_df <- analysis_df %>%
   group_by(lake, latitude, longitude) %>%
   summarize(
-    mean_doc = mean(doc_mgl, na.rm = TRUE),
+    mean_doc = mean(doc_mg_l, na.rm = TRUE),
     mean_trophic = mean(trophic_position, na.rm = TRUE),
     .groups = "drop"
   ) %>%
@@ -26,33 +32,17 @@ lake_map_df <- analysis_df %>%
 
 ggplot(lake_map_df, aes(x = longitude, y = latitude, color = mean_doc)) +
   geom_point(size = 2.8, alpha = 0.9) +
-  scale_color_viridis_c(option = "magma") +
+  scale_color_gradient(low = "lightblue", high = "darkblue") +
   coord_quickmap() +
+  xlim(-160, 130) +
+  ylim(45, 72) +
   labs(
-    title = "Lake locations colored by mean DOC",
-    x = "Longitude",
-    y = "Latitude",
-    color = "Mean DOC"
+    title = "Lake locations (colored by mean DOC)",
+    x = "long",
+    y = "lat",
+    color = "mean DOC"
   ) +
   theme_minimal()
 ```
 
-## Focused Map of High-DOC Lakes
 
-```{r}
-top_doc <- lake_map_df %>%
-  arrange(desc(mean_doc)) %>%
-  slice_head(n = 12)
-
-ggplot(top_doc, aes(x = longitude, y = latitude, label = lake, size = mean_trophic)) +
-  geom_point(color = "#2c7fb8", alpha = 0.8) +
-  geom_text(check_overlap = TRUE, hjust = 0, nudge_x = 0.15, size = 3) +
-  coord_quickmap() +
-  labs(
-    title = "Top DOC lakes with mean trophic position",
-    x = "Longitude",
-    y = "Latitude",
-    size = "Mean trophic"
-  ) +
-  theme_minimal()
-```
