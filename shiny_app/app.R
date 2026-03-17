@@ -2,52 +2,9 @@ library(shiny)
 library(readr)
 library(dplyr)
 library(ggplot2)
-library(lubridate)
 
-clean_names_simple <- function(x) {
-  x <- gsub("[^A-Za-z0-9]+", "_", x)
-  x <- gsub("_+", "_", x)
-  x <- gsub("^_|_$", "", x)
-  tolower(x)
-}
-
-build_analysis_df <- function() {
-  fish <- read_csv("../data/Charetteetal2024_CJFAS_Fish.csv", na = c("", "NA", "-999"), show_col_types = FALSE)
-  baseline <- read_csv("../data/Charetteetal2024_CJFAS_Baselines_DOC.csv", na = c("", "NA", "-999"), show_col_types = FALSE)
-
-  names(fish) <- clean_names_simple(names(fish))
-  names(baseline) <- clean_names_simple(names(baseline))
-
-  fish %>%
-    mutate(
-      fish_species = as.factor(fish_species),
-      lake = as.factor(lake),
-      region = as.factor(region),
-      sample_date = make_date(year, month, day),
-      doc_level = case_when(
-        doc_mgl < 5 ~ "low_doc",
-        doc_mgl < 10 ~ "medium_doc",
-        TRUE ~ "high_doc"
-      )
-    ) %>%
-    left_join(
-      baseline %>%
-        select(
-          lake,
-          baseline_av_pelagic_d13c = av_pelagic_d13c,
-          baseline_av_pelagic_d15n = av_pelagic_d15n,
-          baseline_av_benthic_d13c = av_benthic_d13c,
-          baseline_av_benthic_d15n = av_benthic_d15n
-        ),
-      by = "lake"
-    )
-}
-
-analysis_df <- if (file.exists("../data/analysis_df.csv")) {
-  read_csv("../data/analysis_df.csv", show_col_types = FALSE)
-} else {
-  build_analysis_df()
-}
+# Assume the cleaned analysis dataset has already been created in data/analysis_df.csv.
+analysis_df <- read_csv("../data/analysis_df.csv", show_col_types = FALSE)
 
 metric_choices <- c(
   trophic_position = "trophic_position",
@@ -96,13 +53,13 @@ server <- function(input, output) {
     }
 
     dat %>%
-      filter(!is.na(doc_mgl), !is.na(.data[[input$metric_choice]]))
+      filter(!is.na(doc_mg_l), !is.na(.data[[input$metric_choice]]))
   })
 
   output$scatter_plot <- renderPlot({
-    ggplot(filtered_df(), aes(x = doc_mgl, y = .data[[input$metric_choice]])) +
-      geom_point(alpha = 0.6, color = "#2b8cbe") +
-      geom_smooth(method = "lm", se = FALSE, color = "#e34a33") +
+    ggplot(filtered_df(), aes(x = doc_mg_l, y = .data[[input$metric_choice]])) +
+      geom_point(alpha = 0.6, color = "blue") +
+      geom_smooth(method = "lm", se = FALSE, color = "red") +
       labs(
         title = "DOC vs selected metric",
         subtitle = paste("Species:", input$species_choice, "| Region:", input$region_choice),
@@ -118,7 +75,7 @@ server <- function(input, output) {
         n = n(),
         mean_metric = mean(.data[[input$metric_choice]], na.rm = TRUE),
         sd_metric = sd(.data[[input$metric_choice]], na.rm = TRUE),
-        mean_doc = mean(doc_mgl, na.rm = TRUE)
+        mean_doc = mean(doc_mg_l, na.rm = TRUE)
       )
   }, digits = 3)
 }

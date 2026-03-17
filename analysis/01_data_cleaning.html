@@ -355,23 +355,23 @@ display: none;
 </div>
 
 
+<p>We begin by loading the packages we need for reading, cleaning, and
+saving the data. This setup chunk prepares the tools used in the rest of
+the notebook.</p>
 <pre class="r"><code>library(readr)
 library(dplyr)
 library(lubridate)
-
-clean_names_simple &lt;- function(x) {
-  x &lt;- gsub(&quot;[^A-Za-z0-9]+&quot;, &quot;_&quot;, x)
-  x &lt;- gsub(&quot;_+&quot;, &quot;_&quot;, x)
-  x &lt;- gsub(&quot;^_|_$&quot;, &quot;&quot;, x)
-  tolower(x)
-}</code></pre>
+library(janitor)</code></pre>
 <div id="import-data" class="section level2">
 <h2>Import Data</h2>
+<p>We first load the raw fish and baseline datasets so we can inspect
+their size and variable names. We also clean the column names with a
+standard function from <code>janitor</code>.</p>
 <pre class="r"><code>fish &lt;- read_csv(&quot;../data/Charetteetal2024_CJFAS_Fish.csv&quot;, na = c(&quot;&quot;, &quot;NA&quot;, &quot;-999&quot;), show_col_types = FALSE)
 baseline &lt;- read_csv(&quot;../data/Charetteetal2024_CJFAS_Baselines_DOC.csv&quot;, na = c(&quot;&quot;, &quot;NA&quot;, &quot;-999&quot;), show_col_types = FALSE)
 
-names(fish) &lt;- clean_names_simple(names(fish))
-names(baseline) &lt;- clean_names_simple(names(baseline))
+fish &lt;- clean_names(fish)
+baseline &lt;- clean_names(baseline)
 
 list(
   fish_dim = dim(fish),
@@ -386,12 +386,12 @@ list(
 ## [1] 78 14
 ## 
 ## $fish_names
-##  [1] &quot;datasource&quot;              &quot;latitude&quot;               
+##  [1] &quot;data_source&quot;             &quot;latitude&quot;               
 ##  [3] &quot;longitude&quot;               &quot;lake&quot;                   
 ##  [5] &quot;region&quot;                  &quot;year&quot;                   
 ##  [7] &quot;month&quot;                   &quot;day&quot;                    
-##  [9] &quot;doc_mgl&quot;                 &quot;fish_species&quot;           
-## [11] &quot;sampleid&quot;                &quot;length_mm&quot;              
+##  [9] &quot;doc_mg_l&quot;                &quot;fish_species&quot;           
+## [11] &quot;sample_id&quot;               &quot;length_mm&quot;              
 ## [13] &quot;d13c&quot;                    &quot;d15n&quot;                   
 ## [15] &quot;c_n&quot;                     &quot;av_pelagic_d13c&quot;        
 ## [17] &quot;av_pelagic_d15n&quot;         &quot;av_benthic_d13c&quot;        
@@ -399,16 +399,20 @@ list(
 ## [21] &quot;pelagic_diet_proportion&quot; &quot;trophic_position&quot;       
 ## 
 ## $baseline_names
-##  [1] &quot;datasource&quot;              &quot;latitude&quot;               
-##  [3] &quot;longitude&quot;               &quot;lake&quot;                   
-##  [5] &quot;region&quot;                  &quot;year&quot;                   
-##  [7] &quot;month&quot;                   &quot;day&quot;                    
-##  [9] &quot;doc_mgl&quot;                 &quot;av_pelagic_d13c&quot;        
-## [11] &quot;av_pelagic_d15n&quot;         &quot;av_benthic_d13c&quot;        
-## [13] &quot;av_benthic_d15n&quot;         &quot;d13c_baselinedifference&quot;</code></pre>
+##  [1] &quot;data_source&quot;              &quot;latitude&quot;                
+##  [3] &quot;longitude&quot;                &quot;lake&quot;                    
+##  [5] &quot;region&quot;                   &quot;year&quot;                    
+##  [7] &quot;month&quot;                    &quot;day&quot;                     
+##  [9] &quot;doc_mg_l&quot;                 &quot;av_pelagic_d13c&quot;         
+## [11] &quot;av_pelagic_d15n&quot;          &quot;av_benthic_d13c&quot;         
+## [13] &quot;av_benthic_d15n&quot;          &quot;d13c_baseline_difference&quot;</code></pre>
 </div>
 <div id="clean-and-join" class="section level2">
 <h2>Clean and Join</h2>
+<p>Next we convert a few variables to factors, build a date column, and
+group DOC into simple categories. Then we join the fish data to the
+baseline data so the main analysis table has the variables we need in
+one place.</p>
 <pre class="r"><code>fish_clean &lt;- fish %&gt;%
   mutate(
     fish_species = as.factor(fish_species),
@@ -416,8 +420,8 @@ list(
     region = as.factor(region),
     sample_date = make_date(year, month, day),
     doc_level = case_when(
-      doc_mgl &lt; 5 ~ &quot;low_doc&quot;,
-      doc_mgl &lt; 10 ~ &quot;medium_doc&quot;,
+      doc_mg_l &lt; 5 ~ &quot;low_doc&quot;,
+      doc_mg_l &lt; 10 ~ &quot;medium_doc&quot;,
       TRUE ~ &quot;high_doc&quot;
     ),
     doc_level = factor(doc_level, levels = c(&quot;low_doc&quot;, &quot;medium_doc&quot;, &quot;high_doc&quot;))
@@ -432,17 +436,17 @@ fish_joined &lt;- fish_clean %&gt;%
         baseline_av_pelagic_d15n = av_pelagic_d15n,
         baseline_av_benthic_d13c = av_benthic_d13c,
         baseline_av_benthic_d15n = av_benthic_d15n,
-        d13c_baselinedifference
+        d13c_baseline_difference
       ),
     by = &quot;lake&quot;
   )
 
 analysis_df &lt;- fish_joined %&gt;%
   select(
-    datasource, lake, region, fish_species, sampleid,
+    data_source, lake, region, fish_species, sample_id,
     year, month, day, sample_date,
     latitude, longitude,
-    doc_mgl, doc_level,
+    doc_mg_l, doc_level,
     length_mm, d13c, d15n, c_n,
     av_pelagic_d13c, av_pelagic_d15n,
     av_benthic_d13c, av_benthic_d15n,
@@ -450,7 +454,7 @@ analysis_df &lt;- fish_joined %&gt;%
     pelagic_diet_proportion, trophic_position,
     baseline_av_pelagic_d13c, baseline_av_pelagic_d15n,
     baseline_av_benthic_d13c, baseline_av_benthic_d15n,
-    d13c_baselinedifference
+    d13c_baseline_difference
   )
 
 dim(analysis_df)</code></pre>
@@ -458,22 +462,31 @@ dim(analysis_df)</code></pre>
 </div>
 <div id="missingness-qa" class="section level2">
 <h2>Missingness QA</h2>
-<pre class="r"><code>analysis_df %&gt;%
-  summarize(
-    across(
-      c(doc_mgl, length_mm, pelagic_diet_proportion, trophic_position, d13c, d15n, c_n),
-      ~ sum(is.na(.x))
-    )
-  )</code></pre>
-<pre><code>## # A tibble: 1 × 7
-##   doc_mgl length_mm pelagic_diet_proportion trophic_position  d13c  d15n   c_n
-##     &lt;int&gt;     &lt;int&gt;                   &lt;int&gt;            &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;
-## 1       0         2                       0                0     0     0     0</code></pre>
+<p>Here we check missing values one variable at a time so the output is
+easier to read. This keeps the quality check simple and matches the
+style we have used in class.</p>
+<pre class="r"><code>sum(is.na(analysis_df$doc_mg_l))</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>sum(is.na(analysis_df$length_mm))</code></pre>
+<pre><code>## [1] 2</code></pre>
+<pre class="r"><code>sum(is.na(analysis_df$pelagic_diet_proportion))</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>sum(is.na(analysis_df$trophic_position))</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>sum(is.na(analysis_df$d13c))</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>sum(is.na(analysis_df$d15n))</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>sum(is.na(analysis_df$c_n))</code></pre>
+<pre><code>## [1] 0</code></pre>
 <p>Rows with missing values are removed only when those variables are
 needed for a specific figure or summary.</p>
 </div>
 <div id="save-cleaned-dataset" class="section level2">
 <h2>Save Cleaned Dataset</h2>
+<p>Finally, we save the cleaned analysis dataset so the later notebooks
+can read the same file. This helps keep the rest of the project
+consistent.</p>
 <pre class="r"><code>write_csv(analysis_df, &quot;../data/analysis_df.csv&quot;)</code></pre>
 </div>
 
